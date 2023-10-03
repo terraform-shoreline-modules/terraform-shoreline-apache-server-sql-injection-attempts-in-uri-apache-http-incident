@@ -1,0 +1,158 @@
+{
+  "name": "apache_sql_injection_attempts_in_uri_incident",
+  "description": "This incident type refers to the detection of SQL injection attempts in Apache web server logs. SQL injection is a type of cyber attack that exploits vulnerabilities in web applications allowing attackers to execute malicious SQL statements. In this incident, attackers are attempting to inject SQL code into the URI (Uniform Resource Identifier) of an Apache web server, potentially compromising the server's security and exposing sensitive information.",
+  "params": [
+    {
+      "name": "REGEX_PATTERN_TO_MATCH_SQL_INJECTION",
+      "value": ""
+    },
+    {
+      "name": "MODSECURITY_RULE_ID",
+      "value": ""
+    },
+    {
+      "name": "MODSECURITY_RULESET_FILE",
+      "value": ""
+    },
+    {
+      "name": "HOST_NAME",
+      "value": ""
+    },
+    {
+      "name": "K8S_CLUSTER_NAME",
+      "value": ""
+    },
+    {
+      "name": "NAMESPACE",
+      "value": ""
+    }
+  ],
+  "cells": [
+    {
+      "name": "cell_1",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Apache SQL Injection Attempts in URI Incident\nThis incident type refers to the detection of SQL injection attempts in Apache web server logs. SQL injection is a type of cyber attack that exploits vulnerabilities in web applications allowing attackers to execute malicious SQL statements. In this incident, attackers are attempting to inject SQL code into the URI (Uniform Resource Identifier) of an Apache web server, potentially compromising the server's security and exposing sensitive information."
+    },
+    {
+      "name": "cell_2",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Show the last 100 lines of Apache access log"
+    },
+    {
+      "name": "cell_3",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `tail -n 100 /var/log/apache/access.log`"
+    },
+    {
+      "name": "cell_4",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Show all unique IP addresses that accessed the server in the last 24 hours"
+    },
+    {
+      "name": "cell_5",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `grep \"\\[`date -d '24 hours ago' '+%d/%b/%Y:%H:%M'`\\:\" /var/log/apache/access.log | awk '{print $1}' | sort | uniq`"
+    },
+    {
+      "name": "cell_6",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Show all GET requests with SQL injection attempts"
+    },
+    {
+      "name": "cell_7",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `grep -E \"GET /.*\\b(union|select|drop|insert|update)\\b.*HTTP\" /var/log/apache/access.log`"
+    },
+    {
+      "name": "cell_8",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Show all POST requests with SQL injection attempts"
+    },
+    {
+      "name": "cell_9",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `grep -E \"POST /.*\\b(union|select|drop|insert|update)\\b.*HTTP\" /var/log/apache/access.log`"
+    },
+    {
+      "name": "cell_10",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Show the Apache configuration file"
+    },
+    {
+      "name": "cell_11",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `cat /etc/apache2/apache2.conf`"
+    },
+    {
+      "name": "cell_12",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Show all enabled Apache modules"
+    },
+    {
+      "name": "cell_13",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `apache2ctl -M`"
+    },
+    {
+      "name": "cell_14",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Show all Apache virtual hosts"
+    },
+    {
+      "name": "cell_15",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `apache2ctl -S`"
+    },
+    {
+      "name": "cell_16",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Show the Apache error log"
+    },
+    {
+      "name": "cell_17",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `tail -f /var/log/apache/error.log`"
+    },
+    {
+      "name": "cell_18",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Update and patch the Apache server to the latest stable version to prevent the exploitation of known vulnerabilities."
+    },
+    {
+      "name": "cell_19",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_update_apache()"
+    },
+    {
+      "name": "cell_20",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Create or Modify ModSecurity Rule to prevent SQL injection attacks."
+    },
+    {
+      "name": "cell_21",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_defend_sql_injection($REGEX_PATTERN_TO_MATCH_SQL_INJECTION, $MODSECURITY_RULE_ID, $MODSECURITY_RULESET_FILE)"
+    }
+  ]
+}
